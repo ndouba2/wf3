@@ -1,9 +1,8 @@
 #+BEGIN_HTML
 
 
-** Docker Basic
-| Name                        | Summary                                                                 |
-|-----------------------------+-------------------------------------------------------------------------|
+** install Docker 
+
 | Install docker on Ubuntu    | =apt-get install docker.io=                                             |
 | [Install docker on rehel]]    | [https://docs.docker.com/engine/install/rhel/][Link: How To Install and Use Docker on rehel ]]   |
 | Install docker in Debian 10 | [[https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-debian-10][Link: How To Install and Use Docker on Debian 10]]                        |
