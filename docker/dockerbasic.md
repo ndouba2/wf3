@@ -1,61 +1,434 @@
-#+BEGIN_HTML
+Docker and Docker compose
+Install docker and docker-compose
+Docker
+Docker-Compose
+Docker basics
+docker build -t essai .
+--tag essai gives a name to the image
 
+launching the service
 
-** install Docker 
+sudo service docker start
+ps, start, stop
 
-| Install docker on Ubuntu    | =apt-get install docker.io=                                             |
-| [Install docker on rehel]]    | [https://docs.docker.com/engine/install/rhel/][Link: How To Install and Use Docker on rehel ]]   |
-| Install docker in Debian 10 | [[https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-debian-10][Link: How To Install and Use Docker on Debian 10]]                        |
+sudo docker ps -a
+sudo docker start my-running-app
+sudo docker stop my-running-app
+interactive:
 
+sudo docker run -it -p 3000:3000 --rm --name my-running-app my-nodejs-app
+Cleaning All All All:
 
+docker system prune --all --force
+Cleaning containers:
 
-Container run
-Container is runtime environments for an image. When we do docker pull <image>, the container is not started nor created yet.
+docker rm $(docker ps -aq)
+Cleaning volumes:
 
-We most commonly used command is the docker run <image> command. It downloads the image if it's not already in our local machine and starts the container once the image is ready.
+docker volume prune
+volume rm -f $(docker volume ls -q)
+Inspecting volumes:
 
-docker create: creates a writable container layer over the specified image and prepares it for running the specified command. The container ID is then printed to STDOUT. This is similar to docker run -d except the container is never started. We can then use the docker start <container_id> command to start the container at any point.
-$ docker create -t -i fedora bash
-...
-dff32a272ad4c94cd51419ee4f53c371e3c3a8cfb448a469634d4420e139d118
+docker volume inspect <volume_name>
+retrieving an image:
 
-$ docker start -a -i dff32a272ad4c
-[root@dff32a272ad4 /]# 
-i: interactive, keep STDIN open even if not attached
-t: Allocate a pseudo-TTY
-a: Attach container's STDOUT and STDERR and forward all signals to the process.
+docker pull ubuntu:latest
+Cleaning images:
 
-docker rename allows the container to be renamed.
-$ docker rename my_container my_new_container
+docker rmi -f $(docker images -q)
+docker image prune
+Renaming an image:
 
-docker run creates and starts a container in one operation.
-$ docker run -it ubuntu-ssh-k /bin/bash
+docker tag <IMAGE ID> nom/nom_image:tag
+Following the logs of a container:
 
-docker rm deletes a container.
-$ docker rm myfedora
+docker logs -f <NOM_CONTENEUR_DOCKER>
+Entering in a running container:
 
-docker update updates a container's resource limits. Example : updating multiple resource configurations for multiple containers:
-$ docker update --cpu-shares 512 -m 300M dff32a272ad4 happy_kare
-dff32a272ad4
-happy_kare
+docker exec -it <NOM_CONTENEUR_DOCKER> bash
+Verifying the parameters of a container:
 
+docker inspect -f <NOM_CONTENEUR_DOCKER>
+Dockerfile Hello world
+Here is a sample Dockerfile
 
-Container info
-docker ps shows running containers.
-$ docker ps 
-CONTAINER ID        IMAGE                 COMMAND             CREATED             STATUS              PORTS               NAMES
-e2481c1bad5d        ubuntu-ssh-k:latest   "/bin/bash"         10 hours ago        Up 10 hours                             hopeful_carson 
+FROM node:alpine
 
-docker logs gets logs from container. (We can use a custom log driver, but logs is only available for json-file and journald in 1.10)
-$ docker logs 839f66a78983
+ADD package.json /app/
 
-docker inspect looks at all the info on a container (including IP address).
-To get an IP address of a running container:
-$ docker inspect --format '{{ .NetworkSettings.IPAddress }}' $(docker ps -q)
-172.17.0.5
+WORKDIR /app
 
-docker events gets events from container.
-docker port shows public facing port of container.
-docker top shows running processes in container.
-docker stats shows containers' resource usage statistics.
-docker diff shows changed files in the container's FS.
+RUN npm install
+
+ADD hello.js /app/
+
+CMD npm start
+
+EXPOSE 3000
+
+and with a hello.js script
+
+var express = require('express')
+  var app = express()
+  app.get('/', function(req, res) {
+    res.end('Hello World!')
+  })
+  app.listen(3000)
+
+and a package.json
+
+{
+  "name": "helloworld",
+  "version": "1.0.0",
+  "description": "hello",
+  "main": "hello.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node hello.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.15.4"
+  }
+}
+Docker hello world with node
+First, build the image:
+
+docker build -t hellonode .
+Then create the container:
+
+docker create -p 3000:3000 --name="wonderful_hellonode" hellonode
+Launch it:
+
+docker start wonderful_hellonode
+In a browser, go there:
+
+http://<your_ip>:3000
+You should see the string “Hello World”
+
+Then stop your container:
+
+docker stop wonderful_hellonode
+Using volumes
+Here is a new Dockerfile
+
+FROM node:alpine
+RUN apk update
+RUN apk upgrade
+RUN apk add bash
+ADD package.json /app/
+
+WORKDIR /app
+
+RUN npm install
+
+ADD hello.js /app/
+
+VOLUME /toto
+
+CMD npm start
+
+EXPOSE 3000
+
+now run again the creation of a container:
+
+sudo docker create -p 3000:3000 --name="wonderful_hellonode" -v /tmp:/toto hellonode
+start it:
+
+docker start wonderful_hellonode
+
+verify that the volume is mounted:
+
+sudo docker exec -it wonderful_hellonode  bash
+cd /toto
+ls
+Using journalctl
+go in /etc/docker edit a daemon.json with
+
+{
+"debug": true,
+"log-driver": "journald"
+}
+build an image
+# Getting Started
+
+The getting started guide on Docker has detailed instructions for setting up [Docker].
+
+After setup is complete, run the following commands to verify the success of installation:
+
+### _PLEASE NOTE POST INSTALLATION STEPS BELOW IF YOU HAVE TO PREPEND SUDO TO EVERY COMMAND_
+
+* **docker version** - provides full description of docker version
+* **docker info** - display system wide information
+* **docker -v** - provides a short description of docker version
+* **docker run hello-world** - pull hello-world container from registry and run it
+
+Have a look at the [free training] offered by Docker.
+
+Have a look at the [repository] of images offered by Docker.
+
+### Optional Post Installation Steps
+
+To create the docker group and add your user:
+
+* Create the docker group
+
+  ```bash
+  sudo groupadd docker
+  ```
+
+* Add your user to the docker group
+
+  ```bash
+  sudo usermod -aG docker $USER
+  ```
+
+* Log out and log back in so that your group membership is re-evaluated.
+* Verify that you can run docker commands without sudo.
+
+---
+
+## Docker Commands
+
+### Get docker info
+
+#### General
+
+Command | Description
+--- | ---
+docker version | provides full description of docker version
+docker -v | provides a short description of docker version
+docker info | display system wide information
+docker info --format '{{.DriverStatus}}' | display 'DriverStatus' fragment from docker information
+docker info --format '{{json .DriverStatus}}' | display 'DriverStatus' fragment from docker information in JSON format
+
+### Manage Images
+
+Command | Description
+--- | ---
+docker image ls | shows all local images
+docker image ls --filter 'reference=ubuntu:16.04' | show images filtered by name and tag
+docker image pull [image-name] | pull specified image from registry
+docker image rm [image-name] | remove image for specified _image-name_
+docker image rm [image-id] | remove image for specified _image-id_
+docker image prune | remove unused images
+
+### Search Images
+
+Command | Description
+--- | ---
+docker search [image-name] --filter "is-official=true" | find only official images having *[image-name]*
+docker search [image-name] -- filter "stars=1000" | find only images having specified *[image-name]* and 1000 or more stars
+
+### Manage Containers
+
+#### Display Container Information
+
+Command | Description
+--- | ---
+docker container ls | show all running containers
+docker container ls -a | show all containers regardless of state
+docker container ls --filter "status=exited" --filter "ancestor=ubuntu" | show all container instances of the ubuntu image that have exited
+docker container inspect [container-name] | display detailed information about specified container
+docker container inspect --format '{{.NetworkSettings.IPAddress}}' [container-name] | display detailed information about specified container using specified format
+docker container inspect --format '{{json .NetworkSettings}}' [container-name] | display detailed information about specified container using specified format
+
+#### Run Container
+
+Command | Description
+--- | ---
+docker container run [image-name] | run container based on specified image
+docker container run --rm [image-name] | run container based on specified imaged and immediately remove it once it stops
+docker container run --name fuzzy-box [image-name] | assign name and run container based on specified image
+
+#### Remove Container
+
+Command | Description
+--- | ---
+docker container rm [container-name] | remove specified container
+docker container rm $(docker container ls --filter "status=exited" --filter "ancestor=ubuntu" -q) | remove all containers whose id's are returned from *'$(...)'* list
+
+### Manage Volumes
+
+#### Display Volume Information
+
+Command | Description
+--- | ---
+docker volume ls | show all volumes
+docker volume ls --filter "dangling=true" | display all volumes not referenced by any containers
+docker volume inspect [volume-name] | display detailed information on *[volume-name]*
+
+#### Remove Volumes
+
+Command | Description
+--- | ---
+docker volume rm [volume-name] | remove specified volume
+docker volume rm $(docker volume ls --filter "dangling=true" -q) | remove all volumes having an id equal to any of the id's returned from *'$(...)'* list
+
+---
+
+## Running containers
+
+### Run hello-world container
+
+```docker
+docker run hello-world
+```
+
+### Run an [Alpine Linux] container (a lightweight linux distribution)
+
+1. Find image and display brief summary
+
+   ```docker
+   docker search alpine --filter=stars=1000 --no-trunc
+   ```
+
+1. Fetch alpine image from Docker registry and save it
+
+   ```docker
+   docker pull alpine
+   ```
+
+1. Display list of local images
+
+   ```docker
+   docker image ls
+   ```
+
+1. List container contents using _listing_ format
+
+   ```docker
+   docker run alpine ls -l
+   ```
+
+1. Print message from container
+
+   ```docker
+   docker run alpine echo "Hello from Alpine!"
+   ```
+
+1. Running the run command with the -it flags attaches container to an interactive tty
+
+   ```docker
+   docker run -it alpine bin/sh
+   ```
+
+### Run MongoDB
+
+#### Run MongoDB Using Named Volume
+
+To run a new MongoDB container, execute the following command from the CLI:
+
+```docker
+docker run --rm --name mongo-dev -v mongo-dev-db:/data/db -d mongo
+```
+
+CLI Command | Description
+--- | ---
+--rm | remove container when stopped
+--name mongo-dev | give container a custom name
+-v mongo-dev-db/data/db | map the container volume 'data/db' to a custom name 'mongo-dev-db'
+-d mongo | run mongo container as a daemon in the background
+
+#### Run MongoDB Using Bind Mount
+
+```bash
+cd
+mkdir -p mongodb/data/db
+docker run --rm --name mongo-dev -v ~/mongodb/data/db:/data/db -d mongo
+```
+
+CLI Command | Description
+--- | ---
+--rm | remove container when stopped
+--name mongo-dev | give container a custom name
+-v ~/mongodb/data/db/data/db | map the container volume 'data/db' to a bind mount '~/mongodb/data/db'
+-d mongo | run mongo container as a daemon in the background
+
+### Access MongoDB
+
+#### Connect to MongoDb
+
+There are 2 steps to accessing the MongoDB shell.
+
+1. Firstly, access the MongoDB container shell by executing the following command:
+
+   ```bash
+   docker exec -it mongo-dev bash
+   ```
+
+   This will open an interactive shell (bash) on the MongoDB container.
+
+1. Secondly, once inside the container shell, access the MongoDB shell by executing the following command:
+
+   ```bash
+   mongo localhost
+   ```
+
+#### Show Databases
+
+Once connected to MongoDB shell, run the following command to show a list of databases:
+
+```bash
+show dbs
+```
+
+#### Create New Database
+
+Create a new database and collection
+
+```javascript
+use test
+db.messages.insert({"message": "Hello World!"})
+db.messages.find()
+```
+
+---
+
+## Creating Images
+
+### Create custom [Alpine Linux] image with GIT setup
+
+1. Create project folder with empty Dockerfile
+
+   ```bash
+   cd ~
+   mkdir -p projects/docker/alpine-git
+   cd !$
+   touch Dockerfile
+   ```
+
+1. Create Dockerfile
+
+   ```docker
+   FROM alpine:latest
+
+   LABEL author="codesaucerer" \
+         description="Official Alpine image with GIT and VIM installed"
+
+   ENV WORKING_DIRECTORY=/projects
+
+   RUN apk update && apk add git vim
+
+   RUN mkdir $WORKING_DIRECTORY
+
+   WORKDIR $WORKING_DIRECTORY
+   ```
+
+1. Build Dockerfile
+
+   ```bash
+   docker image build -t [docker-username]/alpine-git
+   docker run --rm -it [docker-username]/alpine-git /bin/sh
+   ```
+
+1. Push Dockerfile
+
+   ```bash
+   docker login
+   docker push [docker-username]/alpine-git:latest
+   ```
+
+---
+
